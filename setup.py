@@ -57,7 +57,7 @@ setup(
     maintainer_email=EMAIL,
     python_requires='>=3.6',
     url=URL,
-    description="Botting Yugioh-DuelLinks",
+    description="Asana typed API Objects",
     long_description=read_md('README.md'),
     keywords='asana api typed python-asana',
     zip_safe=True,
