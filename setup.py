@@ -49,7 +49,7 @@ setup(
     license='MIT',
     version=versioneer.get_version(),
     packages=[
-        'asana_types'
+        'asana_typed'
     ],
     cmdclass=versioneer.get_cmdclass(),
     classifiers=CLASSIFIERS,
