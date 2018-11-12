@@ -1,0 +1,9 @@
+# folders
+.webcache
+.idea
+__pycache__/
+
+# files
+*.pyc
+examples/*.md
+examples/*.html

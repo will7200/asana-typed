@@ -1,0 +1,2 @@
+include versioneer.py
+include asana_typed/_version.py
