@@ -2,6 +2,9 @@
 .webcache
 .idea
 __pycache__/
+*.egg-info/
+build/
+dist/
 
 # files
 *.pyc
