@@ -558,31 +558,31 @@ def project_status_to_dict(x: ProjectStatus) -> Any:
 
 
 class Project(BaseRep):
-    id: Optional[int]
-    gid: Optional[str]
-    archived: Optional[bool]
+    id: int
+    gid: str
+    archived: bool
     color: Optional[str]
-    created_at: Optional[datetime]
+    created_at: datetime
     current_status: Optional[ProjectStatus]
     due_date: Optional[datetime]
     followers: Optional[List[Resource]]
     layout: Optional[str]
     members: Optional[List[Resource]]
     modified_at: Optional[datetime]
-    name: Optional[str]
-    notes: Optional[str]
+    name: str
+    notes: str
     owner: Optional[Resource]
-    public: Optional[bool]
+    public: bool
     resource_type: Optional[str]
     start_on: Optional[datetime]
     team: Optional[Resource]
     workspace: Optional[Resource]
 
-    def __init__(self, id: Optional[int], gid: Optional[str], archived: Optional[bool], color: Optional[str],
-                 created_at: Optional[datetime], current_status: Optional[ProjectStatus], due_date: Optional[datetime],
+    def __init__(self, id: int, gid: str, archived: bool, color: Optional[str],
+                 created_at: datetime, current_status: Optional[ProjectStatus], due_date: Optional[datetime],
                  followers: Optional[List[Resource]],
-                 layout: Optional[str], members: Optional[List[Resource]], modified_at: Optional[datetime],
-                 name: Optional[str], notes: Optional[str], owner: Optional[Resource], public: Optional[bool],
+                 layout: Optional[str], members: Optional[List[Resource]], modified_at: datetime,
+                 name: str, notes: str, owner: Optional[Resource], public: bool,
                  resource_type: Optional[str], start_on: Optional[datetime], team: Optional[Resource],
                  workspace: Optional[Resource]) -> None:
         self.id = id
@@ -608,21 +608,21 @@ class Project(BaseRep):
     @staticmethod
     def from_dict(obj: Any) -> 'Project':
         assert isinstance(obj, dict)
-        id = from_union([from_int, from_none], obj.get("id"))
-        gid = from_union([from_str, from_none], obj.get("gid"))
-        archived = from_union([from_bool, from_none], obj.get("archived"))
+        id = from_int(obj.get("id"))
+        gid = from_str(obj.get("gid"))
+        archived = from_bool(obj.get("archived"))
         color = from_union([from_str, from_none], obj.get("color"))
-        created_at = from_union([from_datetime, from_none], obj.get("created_at"))
+        created_at = from_datetime(obj.get("created_at"))
         current_status = from_union([ProjectStatus.from_dict, from_none], obj.get("current_status"))
         due_date = from_union([from_datetime, from_none], obj.get("due_date"))
         followers = from_union([lambda x: from_list(Resource.from_dict, x), from_none], obj.get("followers"))
         layout = from_union([from_str, from_none], obj.get("layout"))
         members = from_union([lambda x: from_list(Resource.from_dict, x), from_none], obj.get("members"))
-        modified_at = from_union([from_datetime, from_none], obj.get("modified_at"))
-        name = from_union([from_str, from_none], obj.get("name"))
-        notes = from_union([from_str, from_none], obj.get("notes"))
+        modified_at = from_datetime(obj.get("modified_at"))
+        name = from_str(obj.get("name"))
+        notes = from_str(obj.get("notes"))
         owner = from_union([Resource.from_dict, from_none], obj.get("owner"))
-        public = from_union([from_bool, from_none], obj.get("public"))
+        public = from_bool(obj.get("public"))
         resource_type = from_union([from_str, from_none], obj.get("resource_type"))
         start_on = from_union([from_datetime, from_none], obj.get("start_on"))
         team = from_union([Resource.from_dict, from_none], obj.get("team"))
@@ -632,9 +632,9 @@ class Project(BaseRep):
 
     def to_dict(self) -> dict:
         result: dict = {}
-        result["id"] = from_union([from_int, from_none], self.id)
-        result["gid"] = from_union([from_str, from_none], self.gid)
-        result["archived"] = from_union([from_bool, from_none], self.archived)
+        result["id"] = from_int(self.id)
+        result["gid"] = from_str(self.gid)
+        result["archived"] = from_bool(self.archived)
         result["color"] = from_union([from_str, from_none], self.color)
         result["created_at"] = from_union([lambda x: x.isoformat(), from_none], self.created_at)
         result["current_status"] = from_none(self.current_status)
@@ -645,10 +645,10 @@ class Project(BaseRep):
         result["members"] = from_union([lambda x: from_list(lambda x: to_class(Resource, x), x), from_none],
                                        self.members)
         result["modified_at"] = from_union([lambda x: x.isoformat(), from_none], self.modified_at)
-        result["name"] = from_union([from_str, from_none], self.name)
-        result["notes"] = from_union([from_str, from_none], self.notes)
+        result["name"] = from_str(self.name)
+        result["notes"] = from_str(self.notes)
         result["owner"] = from_union([lambda x: to_class(Resource, x), from_none], self.owner)
-        result["public"] = from_union([from_bool, from_none], self.public)
+        result["public"] = from_bool(self.public)
         result["resource_type"] = from_union([from_str, from_none], self.resource_type)
         result["start_on"] = from_union([lambda x: x.isoformat(), from_none], self.start_on)
         result["team"] = from_union([lambda x: to_class(Resource, x), from_none], self.team)
