@@ -144,7 +144,7 @@ with open('markdown.md', 'w') as f:
 with open('message.html', 'w') as f:
     f.write(html)
 
-from asana_types import Query
+from asana_typed import Query
 
 q = Query(tasks_details)
 q.is_set('completed').get_list()
