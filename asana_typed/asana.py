@@ -342,6 +342,56 @@ class Membership:
         return result
 
 
+story_required_key = {'id', 'gid', 'created_at', 'created_by', 'resource_subtype', 'resource_type', 'text', 'type'}
+
+
+class Story(BaseRep):
+    id: int
+    gid: str
+    created_at: datetime
+    created_by: Resource
+    resource_subtype: str
+    resource_type: str
+    text: str
+    type_: str
+
+    def __init__(self, id_: int, gid: str, created_at: datetime, created_by: Resource, resource_subtype: str,
+                 resource_type: str, text: str, type_: str) -> None:
+        self.id = id_
+        self.gid = gid
+        self.created_at = created_at
+        self.created_by = created_by
+        self.resource_subtype = resource_subtype
+        self.resource_type = resource_type
+        self.text = text
+        self.type_ = type_
+
+    @staticmethod
+    def from_dict(obj: Any) -> 'Story':
+        assert isinstance(obj, dict)
+        id_ = from_int(obj.get("id"))
+        gid = from_str(obj.get("gid"))
+        created_at = from_datetime(obj.get("created_at"))
+        created_by = Resource.from_dict(obj.get("created_by"))
+        resource_subtype = from_str(obj.get("resource_subtype"))
+        resource_type = from_str(obj.get("resource_type"))
+        text = from_str(obj.get("text"))
+        type = from_str(obj.get("type"))
+        return Story(id_, gid, created_at, created_by, resource_subtype, resource_type, text, type)
+
+    def to_dict(self) -> dict:
+        result: dict = {}
+        result["id"] = from_int(self.id)
+        result["gid"] = from_str(self.gid)
+        result["created_at"] = self.created_at.isoformat()
+        result["created_by"] = to_class(Resource, self.created_by)
+        result["resource_subtype"] = from_str(self.resource_subtype)
+        result["resource_type"] = from_str(self.resource_type)
+        result["text"] = from_str(self.text)
+        result["type"] = from_str(self.type_)
+        return result
+
+
 task_required_keys = {'id', 'gid', 'assignee', 'assignee_status', 'completed', 'completed_at', 'created_at', 'due_at',
                       'due_on', 'followers', 'hearted', 'hearts', 'liked', 'likes', 'memberships', 'modified_at',
                       'name', 'notes', 'num_hearts', 'num_likes', 'parent', 'projects', 'resource_type', 'start_on',
@@ -481,6 +531,9 @@ class Task(BaseRep):
         result["resource_subtype"] = from_str(self.resource_subtype)
         result["workspace"] = to_class(Resource, self.workspace)
         return result
+
+    def fetch_stories(self, client):
+        return map(lambda x: Story.from_dict(x), client.tasks.stories(self.id))
 
 
 def task_from_dict(s: Any) -> Task:
