@@ -12,7 +12,11 @@ from cachecontrol.heuristics import BaseHeuristic
 
 from asana_typed import Project, Query
 from asana_typed import Task
+from asana_typed.asana import Story
 from examples.tree_node import Tree
+import pytz
+
+utc = pytz.UTC
 
 
 class OneWeekHeuristic(BaseHeuristic):
@@ -39,16 +43,24 @@ client = asana.Client(sess)
 me = client.users.me()
 workspace = me['workspaces'][0]
 print("Hello " + me['name'])
-
-tasks = list(client.tasks.find_all({'workspace': workspace['id'], 'assignee': 'me', 'completed_since': '2018-11-3'}))
+week_end = datetime(2019, 1, 5)
+tasks = list(
+    client.tasks.find_all({'workspace': workspace['id'], 'assignee': 'me', 'completed_since': f'{week_end:%Y-%m-%d}'}))
 
 tasks_details: List[Task] = []
+issues: List[Story] = []
 
 parents = {}
 for task in tasks[:]:
     ptask = client.tasks.find_by_id(task.get('id'))
     ptask = Task.from_dict(ptask)
     tasks_details.append(ptask)
+    stories = list(ptask.fetch_stories(client))
+    if len(stories) > 0:
+        query = Query(stories)
+        sublist = query.equals('type_', 'comment').contains('text', 'ISSUE', case=False).get_list()
+        if len(sublist) > 0:
+            issues = issues + sublist
     if ptask.parent:
         parent = ptask.parent.__fetch__task__(client)
         if ptask.due_on == datetime.min:
@@ -57,7 +69,9 @@ for task in tasks[:]:
 data = Query(tasks_details)
 completed_last_week: List[Task] = data.is_true('completed').sort_by('due_on').sort_by('completed_at', False).get_list()
 planned_for_next_week: List[Task] = set(tasks_details).difference(set(completed_last_week))
-planned_for_last_week: List[Task] = data.greater_than('due_on', datetime(2018, 11, 3)).get_list()
+planned_for_last_week: List[Task] = data.less_than('created_at', utc.localize(week_end)).greater_than(
+    'due_on',
+    week_end).get_list()
 
 all_items = []
 
@@ -116,6 +130,29 @@ md_clw = ["{0} {1}  ".format(("\t" * (level - 1)) + '+', fetch_from_list(identif
 md_pfnw = ["{0} {1}  ".format(("\t" * (level - 1)) + '+', fetch_from_list(identifier)) for identifier, level in
            pfnw.fake_show("Root", skip_root=True)]
 
+qq = Query(issues)
+
+
+def group_by_issue_text(x):
+    try:
+        return x.text.split('\n')[0].split('-')[1]
+    except IndexError:
+        return "Unknown"
+
+
+grouped_issues = qq.sort_by('created_at').group_by(lambda x: group_by_issue_text(x))
+issues_updates = []
+for key in grouped_issues.keys():
+    first_story = grouped_issues[key][0]
+    issues_updates.append("{0} {1}  ".format(("\t" * 0) + '+', key))
+    for issue in grouped_issues[key][:]:
+        try:
+            status = issue.text.split('\n')[0].split('-')[2]
+        except IndexError:
+            status = ''
+        text = ' '.join(issue.text.split('\n')[1:])
+        issues_updates.append("{0} [{1}] {2} ".format(("\t" * 1) + '+', status, text))
+
 nl = '\n\n'
 t = textwrap.dedent(f"""Planned for Last Week:  \n
 {nl.join(md_pflw)}
@@ -127,7 +164,7 @@ Planned for Next Week:  \n
 {nl.join(md_pfnw)}
 
 New Issues:  \n
-+ None 
+{nl.join(issues_updates)}
  
 Old Issues:  \n
 + None  
