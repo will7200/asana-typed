@@ -2,6 +2,7 @@ import calendar
 import os
 import textwrap
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from email.utils import parsedate, formatdate
 from typing import List
 
@@ -68,10 +69,11 @@ for task in tasks[:]:
 
 data = Query(tasks_details)
 completed_last_week: List[Task] = data.is_true('completed').sort_by('due_on').sort_by('completed_at', False).get_list()
-planned_for_next_week: List[Task] = set(tasks_details).difference(set(completed_last_week))
-planned_for_last_week: List[Task] = data.less_than('created_at', utc.localize(week_end)).greater_than(
-    'due_on',
-    week_end).get_list()
+planned_for_next_week: List[Task] = Query(list(set(tasks_details).difference(set(completed_last_week)))).greater_than(
+    'due_on', week_end + relativedelta(weeks=1)).less_than(
+    'due_on', week_end + relativedelta(weeks=2)).get_list()
+planned_for_last_week: List[Task] = data.less_than('created_at', utc.localize(week_end)). \
+    greater_than('due_on', week_end).get_list()
 
 all_items = []
 
