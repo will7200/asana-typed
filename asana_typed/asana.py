@@ -266,7 +266,7 @@ tag_required_keys = {'id', 'gid', 'color', 'created_at', 'followers', 'name', 'n
 class Tag(BaseRep):
     id: int
     gid: str
-    color: str
+    color: Optional[str]
     created_at: datetime
     followers: List[Resource]
     name: str
@@ -274,7 +274,8 @@ class Tag(BaseRep):
     resource_type: str
     workspace: Resource
 
-    def __init__(self, id: int, gid: str, color: str, created_at: datetime, followers: List[Resource], name: str,
+    def __init__(self, id: int, gid: str, color: Optional[str], created_at: datetime, followers: List[Resource],
+                 name: str,
                  notes: str,
                  resource_type: str, workspace: Resource) -> None:
         self.id = id
@@ -296,7 +297,7 @@ class Tag(BaseRep):
                 f"Following keys are missing:\n{', '.join(list(set_keys))}")
         id = from_int(obj.get("id"))
         gid = from_str(obj.get("gid"))
-        color = from_str(obj.get("color"))
+        color = from_union([from_str, from_none], obj.get("color"))
         created_at = from_datetime(obj.get("created_at"))
         followers = from_list(lambda x: x, obj.get("followers"))
         name = from_str(obj.get("name"))
@@ -309,7 +310,7 @@ class Tag(BaseRep):
         result: dict = {}
         result["id"] = from_int(self.id)
         result["gid"] = from_str(self.gid)
-        result["color"] = from_str(self.color)
+        result["color"] = from_union([from_str, from_none], self.color)
         result["created_at"] = self.created_at.isoformat()
         result["followers"] = from_list(lambda x: x, self.followers)
         result["name"] = from_str(self.name)
