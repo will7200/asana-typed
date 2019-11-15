@@ -4,13 +4,14 @@ import textwrap
 from datetime import datetime, timedelta
 from email.utils import parsedate, formatdate
 from typing import List
+from enum import Enum
 
 import asana
 import pytz
 from cachecontrol import CacheControl
 from cachecontrol.caches import FileCache
 from cachecontrol.heuristics import BaseHeuristic
-from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta, SA
 
 from asana_typed import Project, Query
 from asana_typed import Task
@@ -35,6 +36,31 @@ class OneWeekHeuristic(BaseHeuristic):
         return '110 - "%s"' % msg
 
 
+def get_last_saturday():
+    sat = datetime.now() + relativedelta(weekday=SA(-1))
+    return sat + relativedelta(hour=0, second=0, minute=0)
+
+
+class NoteActions(Enum):
+    Marker = "PY-ASANA"
+    IGNORE = 100
+
+
+def comment_to_action(text):
+    try:
+        text = text[::-1].split('---')[0][::-1].strip()
+    except Exception:
+        return False
+    marker = text.replace(NoteActions.Marker.value, '').replace(':', '').strip().split(',')
+    try:
+        first = marker[0]
+        return NoteActions[first]
+    except IndexError:
+        return False
+    except KeyError:
+        return False
+
+
 token = os.getenv('ASANA_APP_TOKEN', "")
 auth = asana.Client.access_token(token).session
 sess = CacheControl(auth, cache=FileCache('.webcache'), heuristic=OneWeekHeuristic())
@@ -44,17 +70,19 @@ client = asana.Client(sess)
 me = client.users.me()
 workspace = me['workspaces'][0]
 print("Hello " + me['name'])
-week_end = datetime(2019, 1, 5)
+week_end = get_last_saturday()
 tasks = list(
-    client.tasks.find_all({'workspace': workspace['id'], 'assignee': 'me', 'completed_since': f'{week_end:%Y-%m-%d}'}))
+    client.tasks.find_all({'workspace': workspace['gid'], 'assignee': 'me', 'completed_since': f'{week_end:%Y-%m-%d}'}))
 
 tasks_details: List[Task] = []
 issues: List[Story] = []
 
 parents = {}
 for task in tasks[:]:
-    ptask = client.tasks.find_by_id(task.get('id'))
+    ptask = client.tasks.find_by_id(task.get('gid'))
     ptask = Task.from_dict(ptask)
+    if comment_to_action(ptask.notes):
+        continue
     tasks_details.append(ptask)
     stories = list(ptask.fetch_stories(client))
     if len(stories) > 0:
@@ -69,8 +97,7 @@ for task in tasks[:]:
 
 data = Query(tasks_details)
 completed_last_week: List[Task] = data.is_true('completed').sort_by('due_on').sort_by('completed_at', False).get_list()
-planned_for_next_week: List[Task] = Query(list(set(tasks_details).difference(set(completed_last_week)))).greater_than(
-    'due_on', week_end + relativedelta(weeks=1)).less_than(
+planned_for_next_week: List[Task] = Query(list(set(tasks_details).difference(set(completed_last_week)))).less_than(
     'due_on', week_end + relativedelta(weeks=2)).get_list()
 planned_for_last_week: List[Task] = data.less_than('created_at', utc.localize(week_end)). \
     greater_than('due_on', week_end).get_list()

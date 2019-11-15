@@ -58,23 +58,21 @@ def to_class(c: Type[T], x: Any) -> dict:
 
 
 class BaseRep(object):
-    id: int
+    gid: int
 
     def __repr__(self):
-        return f"{self.__class__.__name__} id:{self.id}"
+        return f"{self.__class__.__name__} gid:{self.gid}"
 
 
-resource_required_keys = {'id', 'gid', 'name', 'resource_type'}
+resource_required_keys = {'gid', 'name', 'resource_type'}
 
 
 class Resource(BaseRep):
-    id: int
     gid: str
     name: str
     resource_type: str
 
-    def __init__(self, id: int, gid: str, name: str, resource_type: str) -> None:
-        self.id = id
+    def __init__(self, gid: str, name: str, resource_type: str) -> None:
         self.gid = gid
         self.name = name
         self.resource_type = resource_type
@@ -82,15 +80,13 @@ class Resource(BaseRep):
     @staticmethod
     def from_dict(obj: Any) -> 'Resource':
         assert isinstance(obj, dict)
-        id = from_int(obj.get("id"))
         gid = from_str(obj.get("gid"))
         name = from_str(obj.get("name"))
         resource_type = from_str(obj.get("resource_type"))
-        return Resource(id, gid, name, resource_type)
+        return Resource(gid, name, resource_type)
 
     def to_dict(self) -> dict:
         result: dict = {}
-        result["id"] = from_int(self.id)
         result["gid"] = from_str(self.gid)
         result["name"] = from_str(self.name)
         result["resource_type"] = from_str(self.resource_type)
@@ -103,29 +99,29 @@ class Resource(BaseRep):
             print('Make Fetching method for {}'.format(self.resource_type))
             t = getattr(client, self.resource_type + 's')
             if t is not None:
-                return t.find_by_id(self.id)
+                return t.find_by_id(self.gid)
         raise Exception("Unknown Resource Type " + self.resource_type)
 
     def __fetch__follower__(self, client):
         return self.__fetch__user__(client)
 
     def __fetch__user__(self, client):
-        return User.from_dict(client.users.find_by_id(self.id))
+        return User.from_dict(client.users.find_by_id(self.gid))
 
     def __fetch__workspace__(self, client):
-        return WorkSpace.from_dict(client.workspaces.find_by_id(self.id))
+        return WorkSpace.from_dict(client.workspaces.find_by_id(self.gid))
 
     def __fetch__tag__(self, client):
-        return Tag.from_dict(client.tags.find_by_id(self.id))
+        return Tag.from_dict(client.tags.find_by_id(self.gid))
 
     def __fetch__project__(self, client):
-        return Project.from_dict(client.projects.find_by_id(self.id))
+        return Project.from_dict(client.projects.find_by_id(self.gid))
 
     def __fetch__task__(self, client):
-        return Task.from_dict(client.tasks.find_by_id(self.id))
+        return Task.from_dict(client.tasks.find_by_id(self.gid))
 
 
-workspace_required_keys = {'id', 'gid', 'email_domains', 'is_organization', 'name', 'resource_type'}
+workspace_required_keys = {'gid', 'email_domains', 'is_organization', 'name', 'resource_type'}
 
 
 class WorkSpace(BaseRep):
@@ -136,9 +132,8 @@ class WorkSpace(BaseRep):
     name: str
     resource_type: str
 
-    def __init__(self, id: int, gid: str, email_domains: List[str], is_organization: bool, name: str,
+    def __init__(self, gid: str, email_domains: List[str], is_organization: bool, name: str,
                  resource_type: str) -> None:
-        self.id = id
         self.gid = gid
         self.email_domains = email_domains
         self.is_organization = is_organization
@@ -148,17 +143,15 @@ class WorkSpace(BaseRep):
     @staticmethod
     def from_dict(obj: Any) -> 'WorkSpace':
         assert isinstance(obj, dict)
-        id = from_int(obj.get("id"))
         gid = from_str(obj.get("gid"))
         email_domains = from_list(from_str, obj.get("email_domains"))
         is_organization = from_bool(obj.get("is_organization"))
         name = from_str(obj.get("name"))
         resource_type = from_str(obj.get("resource_type"))
-        return WorkSpace(id, gid, email_domains, is_organization, name, resource_type)
+        return WorkSpace(gid, email_domains, is_organization, name, resource_type)
 
     def to_dict(self) -> dict:
         result: dict = {}
-        result["id"] = from_int(self.id)
         result["gid"] = from_str(self.gid)
         result["email_domains"] = from_list(from_str, self.email_domains)
         result["is_organization"] = from_bool(self.is_organization)
@@ -202,11 +195,10 @@ class Photo:
         return result
 
 
-user_required_keys = {'id', 'gid', 'email', 'name', 'photo', 'resource_type', 'workspaces'}
+user_required_keys = {'gid', 'email', 'name', 'photo', 'resource_type', 'workspaces'}
 
 
 class User(BaseRep):
-    id: int
     gid: str
     email: str
     name: str
@@ -214,9 +206,8 @@ class User(BaseRep):
     resource_type: str
     workspaces: List[Resource]
 
-    def __init__(self, id: int, gid: str, email: str, name: str, photo: Photo, resource_type: str,
+    def __init__(self, gid: str, email: str, name: str, photo: Photo, resource_type: str,
                  workspaces: List[Resource]) -> None:
-        self.id = id
         self.gid = gid
         self.email = email
         self.name = name
@@ -231,7 +222,6 @@ class User(BaseRep):
         if len(set_keys) > 0:
             raise MissingKey(
                 f"Following keys are missing:\n{', '.join(list(set_keys))}")
-        id = from_int(obj.get("id"))
         gid = from_str(obj.get("gid"))
         email = from_str(obj.get("email"))
         name = from_str(obj.get("name"))
@@ -242,7 +232,6 @@ class User(BaseRep):
 
     def to_dict(self) -> dict:
         result: dict = {}
-        result["id"] = from_int(self.id)
         result["gid"] = from_str(self.gid)
         result["email"] = from_str(self.email)
         result["name"] = from_str(self.name)
@@ -260,11 +249,10 @@ def user_to_dict(x: User) -> Any:
     return to_class(User, x)
 
 
-tag_required_keys = {'id', 'gid', 'color', 'created_at', 'followers', 'name', 'notes', 'resource_type', 'workspace'}
+tag_required_keys = {'gid', 'color', 'created_at', 'followers', 'name', 'notes', 'resource_type', 'workspace'}
 
 
 class Tag(BaseRep):
-    id: int
     gid: str
     color: Optional[str]
     created_at: datetime
@@ -274,11 +262,10 @@ class Tag(BaseRep):
     resource_type: str
     workspace: Resource
 
-    def __init__(self, id: int, gid: str, color: Optional[str], created_at: datetime, followers: List[Resource],
+    def __init__(self, gid: str, color: Optional[str], created_at: datetime, followers: List[Resource],
                  name: str,
                  notes: str,
                  resource_type: str, workspace: Resource) -> None:
-        self.id = id
         self.gid = gid
         self.color = color
         self.created_at = created_at
@@ -295,7 +282,6 @@ class Tag(BaseRep):
         if len(set_keys) > 0:
             raise MissingKey(
                 f"Following keys are missing:\n{', '.join(list(set_keys))}")
-        id = from_int(obj.get("id"))
         gid = from_str(obj.get("gid"))
         color = from_union([from_str, from_none], obj.get("color"))
         created_at = from_datetime(obj.get("created_at"))
@@ -304,11 +290,10 @@ class Tag(BaseRep):
         notes = from_str(obj.get("notes"))
         resource_type = from_str(obj.get("resource_type"))
         workspace = Resource.from_dict(obj.get("workspace"))
-        return Tag(id, gid, color, created_at, followers, name, notes, resource_type, workspace)
+        return Tag(gid, color, created_at, followers, name, notes, resource_type, workspace)
 
     def to_dict(self) -> dict:
         result: dict = {}
-        result["id"] = from_int(self.id)
         result["gid"] = from_str(self.gid)
         result["color"] = from_union([from_str, from_none], self.color)
         result["created_at"] = self.created_at.isoformat()
@@ -342,11 +327,10 @@ class Membership:
         return result
 
 
-story_required_key = {'id', 'gid', 'created_at', 'created_by', 'resource_subtype', 'resource_type', 'text', 'type'}
+story_required_key = {'gid', 'created_at', 'created_by', 'resource_subtype', 'resource_type', 'text', 'type'}
 
 
 class Story(BaseRep):
-    id: int
     gid: str
     created_at: datetime
     created_by: Resource
@@ -355,9 +339,8 @@ class Story(BaseRep):
     text: str
     type_: str
 
-    def __init__(self, id_: int, gid: str, created_at: datetime, created_by: Resource, resource_subtype: str,
+    def __init__(self, gid: str, created_at: datetime, created_by: Resource, resource_subtype: str,
                  resource_type: str, text: str, type_: str) -> None:
-        self.id = id_
         self.gid = gid
         self.created_at = created_at
         self.created_by = created_by
@@ -369,7 +352,6 @@ class Story(BaseRep):
     @staticmethod
     def from_dict(obj: Any) -> 'Story':
         assert isinstance(obj, dict)
-        id_ = from_int(obj.get("id"))
         gid = from_str(obj.get("gid"))
         created_at = from_datetime(obj.get("created_at"))
         created_by = Resource.from_dict(obj.get("created_by"))
@@ -377,11 +359,10 @@ class Story(BaseRep):
         resource_type = from_str(obj.get("resource_type"))
         text = from_str(obj.get("text"))
         type = from_str(obj.get("type"))
-        return Story(id_, gid, created_at, created_by, resource_subtype, resource_type, text, type)
+        return Story(gid, created_at, created_by, resource_subtype, resource_type, text, type)
 
     def to_dict(self) -> dict:
         result: dict = {}
-        result["id"] = from_int(self.id)
         result["gid"] = from_str(self.gid)
         result["created_at"] = self.created_at.isoformat()
         result["created_by"] = to_class(Resource, self.created_by)
@@ -392,14 +373,13 @@ class Story(BaseRep):
         return result
 
 
-task_required_keys = {'id', 'gid', 'assignee', 'assignee_status', 'completed', 'completed_at', 'created_at', 'due_at',
+task_required_keys = {'gid', 'assignee', 'assignee_status', 'completed', 'completed_at', 'created_at', 'due_at',
                       'due_on', 'followers', 'hearted', 'hearts', 'liked', 'likes', 'memberships', 'modified_at',
                       'name', 'notes', 'num_hearts', 'num_likes', 'parent', 'projects', 'resource_type', 'start_on',
                       'tags', 'resource_subtype', 'workspace'}
 
 
 class Task(BaseRep):
-    id: int
     gid: str
     assignee: Resource
     assignee_status: str
@@ -427,14 +407,13 @@ class Task(BaseRep):
     resource_subtype: str
     workspace: Resource
 
-    def __init__(self, id: int, gid: str, assignee: Resource, assignee_status: str, completed: bool,
+    def __init__(self, gid: str, assignee: Resource, assignee_status: str, completed: bool,
                  completed_at: datetime, created_at: datetime, due_at: None, due_on: None, followers: List[Resource],
                  hearted: bool, hearts: List[Any], liked: bool, likes: List[Any], memberships: List[Membership],
                  modified_at: datetime, name: str, notes: str, num_hearts: int, num_likes: int, parent: Resource,
                  projects: List[Resource], resource_type: str, start_on: None, tags: List[Resource],
                  resource_subtype: str,
                  workspace: Resource) -> None:
-        self.id = id
         self.gid = gid
         self.assignee = assignee
         self.assignee_status = assignee_status
@@ -469,7 +448,6 @@ class Task(BaseRep):
         if len(set_keys) > 0:
             raise MissingKey(
                 f"Following keys are missing:\n{', '.join(list(set_keys))}")
-        id = from_int(obj.get("id"))
         gid = from_str(obj.get("gid"))
         assignee = Resource.from_dict(obj.get("assignee"))
         assignee_status = from_str(obj.get("assignee_status"))
@@ -496,13 +474,12 @@ class Task(BaseRep):
         tags = from_list(lambda x: Resource.from_dict(x), obj.get("tags"))
         resource_subtype = from_str(obj.get("resource_subtype"))
         workspace = Resource.from_dict(obj.get("workspace"))
-        return Task(id, gid, assignee, assignee_status, completed, completed_at, created_at, due_at, due_on, followers,
+        return Task(gid, assignee, assignee_status, completed, completed_at, created_at, due_at, due_on, followers,
                     hearted, hearts, liked, likes, memberships, modified_at, name, notes, num_hearts, num_likes, parent,
                     projects, resource_type, start_on, tags, resource_subtype, workspace)
 
     def to_dict(self) -> dict:
         result: dict = {}
-        result["id"] = from_int(self.id)
         result["gid"] = from_str(self.gid)
         result["assignee"] = to_class(Resource, self.assignee)
         result["assignee_status"] = from_str(self.assignee_status)
@@ -533,7 +510,7 @@ class Task(BaseRep):
         return result
 
     def fetch_stories(self, client):
-        return map(lambda x: Story.from_dict(x), client.tasks.stories(self.id))
+        return map(lambda x: Story.from_dict(x), client.tasks.stories(self.gid))
 
 
 def task_from_dict(s: Any) -> Task:
@@ -544,7 +521,7 @@ def task_to_dict(x: Task) -> Any:
     return to_class(Task, x)
 
 
-project_status_required_keys = {'id', 'gid', 'author', 'color', 'created_at', 'created_by', 'modified_at',
+project_status_required_keys = {'gid', 'author', 'color', 'created_at', 'created_by', 'modified_at',
                                 'resource_type', 'text'}
 
 
@@ -559,9 +536,8 @@ class ProjectStatus:
     resource_type: str
     text: str
 
-    def __init__(self, id: int, gid: str, author: Resource, color: str, created_at: datetime, created_by: Resource,
+    def __init__(self, gid: str, author: Resource, color: str, created_at: datetime, created_by: Resource,
                  modified_at: datetime, resource_type: str, text: str) -> None:
-        self.id = id
         self.gid = gid
         self.author = author
         self.color = color
@@ -578,7 +554,6 @@ class ProjectStatus:
             print('raising')
             raise MissingKey(
                 f"Following keys are missing:\n{','.join(list(project_status_required_keys.difference(set(obj.keys()))))}")
-        id = from_int(obj.get("id"))
         gid = from_str(obj.get("gid"))
         author = Resource.from_dict(obj.get("author"))
         color = from_str(obj.get("color"))
@@ -587,11 +562,10 @@ class ProjectStatus:
         modified_at = from_datetime(obj.get("modified_at"))
         resource_type = from_str(obj.get("resource_type"))
         text = from_str(obj.get("text"))
-        return ProjectStatus(id, gid, author, color, created_at, created_by, modified_at, resource_type, text)
+        return ProjectStatus(gid, author, color, created_at, created_by, modified_at, resource_type, text)
 
     def to_dict(self) -> dict:
         result: dict = {}
-        result["id"] = from_int(self.id)
         result["gid"] = from_str(self.gid)
         result["author"] = to_class(Resource, self.author)
         result["color"] = from_str(self.color)
@@ -632,14 +606,13 @@ class Project(BaseRep):
     team: Optional[Resource]
     workspace: Optional[Resource]
 
-    def __init__(self, id: int, gid: str, archived: bool, color: Optional[str],
+    def __init__(self, gid: str, archived: bool, color: Optional[str],
                  created_at: datetime, current_status: Optional[ProjectStatus], due_date: Optional[datetime],
                  followers: Optional[List[Resource]],
                  layout: Optional[str], members: Optional[List[Resource]], modified_at: datetime,
                  name: str, notes: str, owner: Optional[Resource], public: bool,
                  resource_type: Optional[str], start_on: Optional[datetime], team: Optional[Resource],
                  workspace: Optional[Resource]) -> None:
-        self.id = id
         self.gid = gid
         self.archived = archived
         self.color = color
@@ -662,7 +635,6 @@ class Project(BaseRep):
     @staticmethod
     def from_dict(obj: Any) -> 'Project':
         assert isinstance(obj, dict)
-        id = from_int(obj.get("id"))
         gid = from_str(obj.get("gid"))
         archived = from_bool(obj.get("archived"))
         color = from_union([from_str, from_none], obj.get("color"))
@@ -681,12 +653,11 @@ class Project(BaseRep):
         start_on = from_union([from_datetime, from_none], obj.get("start_on"))
         team = from_union([Resource.from_dict, from_none], obj.get("team"))
         workspace = from_union([Resource.from_dict, from_none], obj.get("workspace"))
-        return Project(id, gid, archived, color, created_at, current_status, due_date, followers, layout, members,
+        return Project(gid, archived, color, created_at, current_status, due_date, followers, layout, members,
                        modified_at, name, notes, owner, public, resource_type, start_on, team, workspace)
 
     def to_dict(self) -> dict:
         result: dict = {}
-        result["id"] = from_int(self.id)
         result["gid"] = from_str(self.gid)
         result["archived"] = from_bool(self.archived)
         result["color"] = from_union([from_str, from_none], self.color)
